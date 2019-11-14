@@ -1,4 +1,171 @@
-create table Departamento
+-- criar um banco de dados
+CREATE DATABASE AulaRevisao
+
+-- acessar o banco AulaRevisao
+use AulaRevisao
+
+-- criando as tabelas
+CREATE TABLE Departamento
 (
-    
+	CodigoDepartamento SMALLINT IDENTITY PRIMARY KEY,
+	NomeDepartamento VARCHAR(150) NOT NULL,
+	Situacao CHAR(1) DEFAULT('A') CHECK(Situacao='I' OR Situacao='A') NOT NULL
 )
+
+CREATE TABLE Funcionario
+(
+	CodigoFuncionario SMALLINT IDENTITY PRIMARY KEY,
+	Nome VARCHAR(120) NOT NULL,
+	Sexo CHAR(1) CHECK(Sexo='M' OR Sexo='F') NOT NULL,
+	CodigoDepartamento SMALLINT REFERENCES Departamento(CodigoDepartamento) NOT NULL,
+	Salario MONEY CHECK(Salario > 0) NOT NULL,
+	Observacao VARCHAR(2000)
+)
+
+CREATE TABLE Dependente
+(
+	CodigoDependente SMALLINT IDENTITY PRIMARY KEY,
+	Nome VARCHAR(120) NOT NULL,
+	CodFuncionario SMALLINT REFERENCES Funcionario(CodigoFuncionario) NOT NULL,
+	Observacao VARCHAR(2000) 
+)
+
+-- Manipulando dados nas tabelas
+
+-- Inserir registro (situacao ser� preenchida pelo default)
+INSERT INTO Departamento (NomeDepartamento)
+VALUES ('Tecnologia da Informa��o')
+
+INSERT INTO Departamento (NomeDepartamento, Situacao)
+VALUES ('Departamento de Datilografia', 'I')
+
+INSERT INTO Departamento (NomeDepartamento, Situacao)
+VALUES ('Teste', 'A')
+
+-- Altera��o
+UPDATE Departamento
+SET NomeDepartamento = 'Departamento de TI'
+
+WHERE CodigoDepartamento = 1
+
+UPDATE Departamento
+SET NomeDepartamento = 'Tecnologia da Informacao',
+	Situacao = 'I'
+WHERE CodigoDepartamento = 1
+
+UPDATE Departamento
+SET Situacao = 'I'
+WHERE CodigoDepartamento IN (1,2,4)
+
+UPDATE Departamento
+SET Situacao = 'A'
+WHERE CodigoDepartamento = 1
+
+-- Excluir
+DELETE FROM Departamento WHERE CodigoDepartamento = 4
+
+-- Inserindo nas outras tabelas.
+INSERT INTO Funcionario (Nome, Sexo, Salario, CodigoDepartamento, Observacao) 
+VALUES ('Glauco', 'M', 49999.77, 1, NULL),
+       ('Ana', 'F', 50000.00, 1, 'teste'),
+	   ('Jose', 'M', 100, 2, 'outro teste')
+
+INSERT INTO Funcionario (Nome, Sexo, Salario, CodigoDepartamento)
+VALUES ('Cesar', 'M', 5000.00, 1)
+
+INSERT INTO Dependente (Nome, CodFuncionario, Observacao)
+VALUES ('Maria', 3, NULL),
+       ('Mariana', 2, 'teste'),
+	   ('Maria Julia', 1, 'linda'),
+	   ('Diana', 2, ''), 
+	   ('Juliana', 2, NULL)
+
+
+-- Exibir todos os registros da tabela funcionario
+SELECT * FROM Funcionario
+
+-- Exibir o nome e o salario de todos os funcionarios
+-- ordenar pelo salario decrescente
+SELECT Nome, Salario FROM Funcionario ORDER BY Salario DESC
+
+-- Contar quantos funcionarios existem
+SELECT COUNT(CodigoFuncionario) as Qtd FROM Funcionario
+
+-- Saber o valor do maior salario
+SELECT MAX(Salario) AS Maior FROM Funcionario
+
+-- Saber o valor do menor salario
+SELECT MIN(Salario) AS Menor FROM Funcionario
+
+-- Saber a media do salario
+SELECT AVG(Salario) AS Media FROM Funcionario
+
+-- Saber o valor total em salario
+select SUM(Salario) AS Soma from Funcionario
+
+-- Quantidade de funcionarios por sexo.
+select Sexo, COUNT(CodigoFuncionario) as Qtd
+from Funcionario
+group by Sexo
+
+-- exibe os dependente com nome que terminam com "ana"
+select * from Dependente
+where nome LIKE '%ana'
+
+-- exibe os dependente que come�am com a letra "M"
+select * from Dependente
+where nome LIKE 'M%'
+
+-- exibir dependentes cujo observacao � NULO
+select * from Dependente
+where Observacao IS NULL
+
+-- exibir dependentes cujo observacao NAO � NULO
+select * from Dependente
+where Observacao IS NOT NULL
+
+-- exibir os dependentes de codigo 1 ou 2 ou 3 ou 5
+select * from Dependente
+where CodigoDependente IN (1,2,3,5)
+
+-- exibir os funcionarios cujo salario est�o entre 1 e 10.000
+select * from Funcionario 
+where Salario between 1 and 10000
+
+-- exibir os tipos de sexo existentes na tabela funcionario
+select Sexo From Funcionario -- sem distinct
+select DISTINCT Sexo From Funcionario -- com distinct (n�o exibir o repetido)
+
+
+-- Jun��es
+-- INNER JOIN (Exibe os registros desde de que exista correla��o nas duas tabelas envolvidas)
+-- LEFT JOIN (Exibe os registro da esquerda independentemente de haver correla��o na tabela da direita)
+-- RIGHT JOIN (Exibe os registro da direita independentemente de haver correla��o na tabela da esquerda)
+
+-- exibir os dados apenas de funcionario que possui dependente.
+SELECT 
+	f.CodigoFuncionario, f.Nome, f.Sexo,
+	de.NomeDepartamento, f.Salario,
+	d.Nome as NomeDependente 
+FROM 
+	Funcionario f 
+    INNER JOIN Dependente d ON f.CodigoFuncionario = d.CodFuncionario
+	INNER JOIN Departamento de ON de.CodigoDepartamento = f.CodigoDepartamento
+order by f.Nome
+
+-- exibir os dados independentemente de haver ou n�o um dependente do funcionario
+SELECT * 
+FROM 
+	Funcionario f LEFT JOIN Dependente d ON f.CodigoFuncionario = d.CodFuncionario
+order by 
+	f.Nome
+
+-- exibir o nome e a qtd de dependentes por funcionario, independentemente de existir ou n�o um dependente do funcionario.
+SELECT 
+	f.Nome, COUNT(d.CodigoDependente) as Qtd 
+FROM 
+	Funcionario f LEFT JOIN Dependente d ON f.CodigoFuncionario = d.CodFuncionario
+GROUP BY 
+	f.Nome
+ORDER BY 
+	f.Nome
